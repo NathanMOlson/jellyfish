@@ -1,35 +1,3 @@
-/* GStreamer
- * Copyright (C) 2024 FIXME <fixme@example.com>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
- *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin Street, Suite 500,
- * Boston, MA 02110-1335, USA.
- */
-/**
- * SECTION:element-gstjellyfilter
- *
- * The jellyfilter element does FIXME stuff.
- *
- * <refsect2>
- * <title>Example launch line</title>
- * |[
- * gst-launch-1.0 -v fakesrc ! jellyfilter ! FIXME ! fakesink
- * ]|
- * FIXME Describe what the pipeline does.
- * </refsect2>
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -68,13 +36,11 @@ enum
 
 /* pad templates */
 
-/* FIXME: add/remove formats you can handle */
 #define VIDEO_SRC_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ I420, Y444, Y42B, UYVY, RGBA }")
+    GST_VIDEO_CAPS_MAKE("{ RGB }")
 
-/* FIXME: add/remove formats you can handle */
 #define VIDEO_SINK_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ I420, Y444, Y42B, UYVY, RGBA }")
+    GST_VIDEO_CAPS_MAKE("{ RGB }")
 
 
 /* class initialization */
@@ -100,8 +66,8 @@ gst_jelly_filter_class_init (GstJellyFilterClass * klass)
         gst_caps_from_string (VIDEO_SINK_CAPS)));
 
   gst_element_class_set_static_metadata (GST_ELEMENT_CLASS(klass),
-      "FIXME Long name", "Generic", "FIXME Description",
-      "FIXME <fixme@example.com>");
+      "Jellyfish filter", "Generic", "Artistic transform for jellyfish images",
+      "Nathan Olson <email>");
 
   gobject_class->set_property = gst_jelly_filter_set_property;
   gobject_class->get_property = gst_jelly_filter_get_property;
@@ -230,9 +196,6 @@ gst_jelly_filter_transform_frame_ip (GstVideoFilter * filter, GstVideoFrame * fr
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-
-  /* FIXME Remember to set the rank if it's an element that is meant
-     to be autoplugged by decodebin. */
   return gst_element_register (plugin, "jellyfilter", GST_RANK_NONE,
       GST_TYPE_JELLY_FILTER);
 }
