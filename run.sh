@@ -1,0 +1,1 @@
+gst-launch-1.0 filesrc location=jelly.mp4 ! qtdemux ! decodebin ! videoconvert ! videocrop right=70 ! jellyfilter ! videoconvert ! ximagesink --gst-plugin-path=build
