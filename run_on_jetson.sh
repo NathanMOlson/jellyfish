@@ -1,0 +1,1 @@
+DISPLAY=:0 gst-launch-1.0 filesrc location=jelly.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! queue ! nvvidconv ! video/x-raw ! videocrop right=70 ! jellyfilter ! nv3dsink --gst-plugin-path=/home/formapath/jellyfish/build

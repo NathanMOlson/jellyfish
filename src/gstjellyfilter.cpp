@@ -37,10 +37,10 @@ enum
 /* pad templates */
 
 #define VIDEO_SRC_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ RGB }")
+    GST_VIDEO_CAPS_MAKE("{ RGBA }")
 
 #define VIDEO_SINK_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ RGB }")
+    GST_VIDEO_CAPS_MAKE("{ RGBA }")
 
 
 /* class initialization */
