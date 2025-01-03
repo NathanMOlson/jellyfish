@@ -7,10 +7,13 @@
 class JellyFilter
 {
 public:
-    JellyFilter();
+    JellyFilter(GstPad *srcpad);
     ~JellyFilter();
     void transform(GstVideoFrame *inframe, GstVideoFrame *outframe);
     void transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstClockTime duration);
+
+private:
+    GstPad* srcpad_;
 };
 
 #endif
