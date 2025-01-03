@@ -16,8 +16,8 @@ add_executable(jelly src/main.cpp)
 target_compile_options(jelly PUBLIC -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
 target_link_libraries(jelly gstjellyfilter)
 
-add_library(gstjellyfilter SHARED src/gstjellyfilter.cpp src/jelly_filter.cpp)
-target_compile_options(gstjellyfilter PUBLIC -Wno-missing-field-initializers -Wno-unused-parameter -Wno-pedantic)
+add_library(gstjellyfilter src/multithreaded_video_filter.cpp)
+#target_compile_options(gstjellyfilter PUBLIC -Wno-missing-field-initializers -Wno-unused-parameter -Wno-pedantic)
 
 target_link_libraries(gstjellyfilter
 PkgConfig::gstreamer
