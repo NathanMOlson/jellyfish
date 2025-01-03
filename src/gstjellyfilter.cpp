@@ -26,10 +26,8 @@ static GstFlowReturn gst_jelly_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer);
 static gboolean gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
     GstVideoInfo * in_info, GstCaps * outcaps, GstVideoInfo * out_info);
-static GstFlowReturn gst_jelly_filter_transform_frame (GstVideoFilter * filter,
+static GstFlowReturn gst_jelly_filter_transform_async (GstVideoFilter * filter,
     GstVideoFrame * inframe, GstVideoFrame * outframe);
-// static GstFlowReturn gst_jelly_filter_transform_frame_ip (GstVideoFilter * filter,
-//     GstVideoFrame * frame);
 
 enum
 {
@@ -78,8 +76,7 @@ gst_jelly_filter_class_init (GstJellyFilterClass * klass)
   base_transform_class->start = GST_DEBUG_FUNCPTR (gst_jelly_filter_start);
   base_transform_class->stop = GST_DEBUG_FUNCPTR (gst_jelly_filter_stop);
   video_filter_class->set_info = GST_DEBUG_FUNCPTR (gst_jelly_filter_set_info);
-  video_filter_class->transform_frame = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_frame);
-  // video_filter_class->transform_frame_ip = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_frame_ip);
+  video_filter_class->transform_frame = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_async);
 
 }
 
@@ -222,14 +219,14 @@ gst_jelly_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   if (outbuf != buffer)
     gst_buffer_unref (buffer);
 
-  ret = gst_pad_push (trans->srcpad, outbuf);
+  gst_pad_push (trans->srcpad, outbuf);
 
   return ret;
 }
 
 /* transform */
 static GstFlowReturn
-gst_jelly_filter_transform_frame (GstVideoFilter * filter, GstVideoFrame * inframe,
+gst_jelly_filter_transform_async (GstVideoFilter * filter, GstVideoFrame * inframe,
     GstVideoFrame * outframe)
 {
   GstJellyFilter *jellyfilter = GST_JELLY_FILTER (filter);
@@ -239,16 +236,6 @@ gst_jelly_filter_transform_frame (GstVideoFilter * filter, GstVideoFrame * infra
 
   return GST_FLOW_OK;
 }
-
-// static GstFlowReturn
-// gst_jelly_filter_transform_frame_ip (GstVideoFilter * filter, GstVideoFrame * frame)
-// {
-//   GstJellyFilter *jellyfilter = GST_JELLY_FILTER (filter);
-
-//   GST_DEBUG_OBJECT (jellyfilter, "transform_frame_ip");
-
-//   return GST_FLOW_OK;
-// }
 
 static gboolean
 plugin_init (GstPlugin * plugin)
