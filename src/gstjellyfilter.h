@@ -19,8 +19,7 @@ typedef struct _GstJellyFilterClass GstJellyFilterClass;
 struct _GstJellyFilter
 {
   GstVideoFilter base_jellyfilter;
-  JellyFilter jelly_filter;
-
+  std::unique_ptr<JellyFilter> jelly_filter;
 };
 
 struct _GstJellyFilterClass

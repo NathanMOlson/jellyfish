@@ -4,6 +4,14 @@
 
 using namespace std;
 
+JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad)
+{
+}
+
+JellyFilter::~JellyFilter()
+{
+}
+
 void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstClockTime duration)
 {
     cv::Mat hpf;
@@ -15,12 +23,12 @@ void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstCloc
     cv::Mat filtered;
 
     cv::Mat t = cv::Mat::zeros(4, 4, CV_16S);
-    t.at<int16_t>(0,2) = -2;
-    t.at<int16_t>(1,1) = -2;
-    t.at<int16_t>(0,1) = -0.6;
-    t.at<int16_t>(2,1) = 0.6;
-    t.at<int16_t>(2,0) = 2;
-    t.at<int16_t>(3,3) = 1;
+    t.at<int16_t>(0, 2) = -2;
+    t.at<int16_t>(1, 1) = -2;
+    t.at<int16_t>(0, 1) = -0.6;
+    t.at<int16_t>(2, 1) = 0.6;
+    t.at<int16_t>(2, 0) = 2;
+    t.at<int16_t>(3, 3) = 1;
 
     cv::transform(hpf, filtered, t);
 

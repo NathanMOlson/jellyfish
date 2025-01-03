@@ -86,6 +86,7 @@ gst_jelly_filter_init (GstJellyFilter *jellyfilter)
   GstBaseTransform *base_transform = GST_BASE_TRANSFORM (jellyfilter);
   gst_pad_set_chain_function (base_transform->sinkpad,
       GST_DEBUG_FUNCPTR (gst_jelly_chain));
+  jellyfilter->jelly_filter = std::make_unique<JellyFilter>(base_transform->srcpad);
 }
 
 void
@@ -232,7 +233,7 @@ gst_jelly_filter_transform_async (GstVideoFilter * filter, GstVideoFrame * infra
   GstJellyFilter *jellyfilter = GST_JELLY_FILTER (filter);
 
   GST_DEBUG_OBJECT (jellyfilter, "transform_frame");
-  jellyfilter->jelly_filter.transform(inframe, outframe);
+  jellyfilter->jelly_filter->transform(inframe, outframe);
 
   return GST_FLOW_OK;
 }
