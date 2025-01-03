@@ -22,6 +22,8 @@ static void gst_jelly_filter_finalize (GObject * object);
 
 static gboolean gst_jelly_filter_start (GstBaseTransform * trans);
 static gboolean gst_jelly_filter_stop (GstBaseTransform * trans);
+static GstFlowReturn gst_jelly_chain (GstPad * pad, GstObject * parent,
+    GstBuffer * buffer);
 static gboolean gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
     GstVideoInfo * in_info, GstCaps * outcaps, GstVideoInfo * out_info);
 static GstFlowReturn gst_jelly_filter_transform_frame (GstVideoFilter * filter,
@@ -84,6 +86,9 @@ gst_jelly_filter_class_init (GstJellyFilterClass * klass)
 static void
 gst_jelly_filter_init (GstJellyFilter *jellyfilter)
 {
+  GstBaseTransform *base_transform = GST_BASE_TRANSFORM (jellyfilter);
+  gst_pad_set_chain_function (base_transform->sinkpad,
+      GST_DEBUG_FUNCPTR (gst_jelly_chain));
 }
 
 void
@@ -169,6 +174,57 @@ gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
   GST_DEBUG_OBJECT (jellyfilter, "set_info");
 
   return TRUE;
+}
+
+static GstFlowReturn
+gst_jelly_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+{
+  GstBaseTransform *trans = GST_BASE_TRANSFORM_CAST (parent);
+  GstBaseTransformClass *bclass = GST_BASE_TRANSFORM_GET_CLASS (trans);
+  GstBaseTransformPrivate *priv = trans->priv;
+  GstFlowReturn ret;
+  GstClockTime position = GST_CLOCK_TIME_NONE;
+  GstClockTime timestamp, duration;
+  GstBuffer *outbuf = NULL;
+
+  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  duration = GST_BUFFER_DURATION (buffer);
+
+  /* calculate end position of the incoming buffer */
+  if (timestamp != GST_CLOCK_TIME_NONE) {
+    if (duration != GST_CLOCK_TIME_NONE)
+      position = timestamp + duration;
+    else
+      position = timestamp;
+  }
+
+  if (bclass->before_transform)
+    bclass->before_transform (trans, buffer);
+
+  GST_DEBUG_OBJECT (trans, "calling prepare buffer");
+  ret = bclass->prepare_output_buffer (trans, buffer, &outbuf);
+
+  if (ret != GST_FLOW_OK || outbuf == NULL)
+  {
+    gst_buffer_unref (buffer);
+    outbuf = NULL;
+    GST_WARNING_OBJECT (trans, "could not get buffer from pool: %s",
+        gst_flow_get_name (ret));
+    return ret;
+  }
+
+  GST_DEBUG_OBJECT (trans, "using allocated buffer in %p, out %p", buffer, outbuf);
+
+  GST_DEBUG_OBJECT (trans, "doing non-inplace transform");
+
+  ret = bclass->transform (trans, buffer, outbuf);
+  
+  if (outbuf != buffer)
+    gst_buffer_unref (buffer);
+
+  ret = gst_pad_push (trans->srcpad, outbuf);
+
+  return ret;
 }
 
 /* transform */
