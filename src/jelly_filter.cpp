@@ -37,7 +37,17 @@ void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstCloc
 
 void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
 {
+    GstBuffer* inbuf = inframe->buffer;
+    GstBuffer* outbuf = outframe->buffer;
     cv::Mat in(inframe->info.height, inframe->info.width, CV_8UC4, inframe->data[0]);
     cv::Mat out(outframe->info.height, outframe->info.width, CV_8UC4, outframe->data[0]);
-    transform(in, out, inframe->buffer->pts, inframe->buffer->duration);
+    transform(in, out, inbuf->pts, inbuf->duration);
+
+    gst_video_frame_unmap (outframe);
+    gst_video_frame_unmap (inframe);
+
+    if (outbuf != inbuf)
+        gst_buffer_unref(inbuf);
+
+    gst_pad_push(srcpad_, outbuf);
 }

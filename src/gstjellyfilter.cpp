@@ -22,8 +22,10 @@ static void gst_jelly_filter_finalize (GObject * object);
 
 static gboolean gst_jelly_filter_start (GstBaseTransform * trans);
 static gboolean gst_jelly_filter_stop (GstBaseTransform * trans);
-static GstFlowReturn gst_jelly_chain (GstPad * pad, GstObject * parent,
+static GstFlowReturn gst_jelly_filter_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer);
+static GstFlowReturn gst_jelly_filter_transform (GstBaseTransform * trans, GstBuffer * inbuf,
+    GstBuffer * outbuf);
 static gboolean gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
     GstVideoInfo * in_info, GstCaps * outcaps, GstVideoInfo * out_info);
 static GstFlowReturn gst_jelly_filter_transform_async (GstVideoFilter * filter,
@@ -75,6 +77,7 @@ gst_jelly_filter_class_init (GstJellyFilterClass * klass)
   gobject_class->finalize = gst_jelly_filter_finalize;
   base_transform_class->start = GST_DEBUG_FUNCPTR (gst_jelly_filter_start);
   base_transform_class->stop = GST_DEBUG_FUNCPTR (gst_jelly_filter_stop);
+  base_transform_class->transform = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform);
   video_filter_class->set_info = GST_DEBUG_FUNCPTR (gst_jelly_filter_set_info);
   video_filter_class->transform_frame = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_async);
 
@@ -85,7 +88,7 @@ gst_jelly_filter_init (GstJellyFilter *jellyfilter)
 {
   GstBaseTransform *base_transform = GST_BASE_TRANSFORM (jellyfilter);
   gst_pad_set_chain_function (base_transform->sinkpad,
-      GST_DEBUG_FUNCPTR (gst_jelly_chain));
+      GST_DEBUG_FUNCPTR (gst_jelly_filter_chain));
   jellyfilter->jelly_filter = std::make_unique<JellyFilter>(base_transform->srcpad);
 }
 
@@ -175,7 +178,7 @@ gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
 }
 
 static GstFlowReturn
-gst_jelly_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+gst_jelly_filter_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
 {
   GstBaseTransform *trans = GST_BASE_TRANSFORM_CAST (parent);
   GstBaseTransformClass *bclass = GST_BASE_TRANSFORM_GET_CLASS (trans);
@@ -216,13 +219,55 @@ gst_jelly_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   GST_DEBUG_OBJECT (trans, "doing non-inplace transform");
 
   ret = bclass->transform (trans, buffer, outbuf);
-  
-  if (outbuf != buffer)
-    gst_buffer_unref (buffer);
-
-  gst_pad_push (trans->srcpad, outbuf);
 
   return ret;
+}
+
+static GstFlowReturn
+gst_jelly_filter_transform (GstBaseTransform * trans, GstBuffer * inbuf,
+    GstBuffer * outbuf)
+{
+  GstFlowReturn res;
+  GstVideoFilter *filter = GST_VIDEO_FILTER_CAST (trans);
+  GstVideoFilterClass *fclass;
+
+  if (G_UNLIKELY (!filter->negotiated))
+    goto unknown_format;
+
+  fclass = GST_VIDEO_FILTER_GET_CLASS (filter);
+  if (fclass->transform_frame) {
+    GstVideoFrame in_frame, out_frame;
+
+    if (!gst_video_frame_map (&in_frame, &filter->in_info, inbuf,
+            (GstMapFlags)(GST_MAP_READ | (GstMapFlags)GST_VIDEO_FRAME_MAP_FLAG_NO_REF)))
+      goto invalid_buffer;
+
+    if (!gst_video_frame_map (&out_frame, &filter->out_info, outbuf,
+            (GstMapFlags)(GST_MAP_WRITE | (GstMapFlags)GST_VIDEO_FRAME_MAP_FLAG_NO_REF))) {
+      gst_video_frame_unmap (&in_frame);
+      goto invalid_buffer;
+    }
+    res = fclass->transform_frame (filter, &in_frame, &out_frame);
+  } else {
+    GST_DEBUG_OBJECT (trans, "no transform_frame vmethod");
+    res = GST_FLOW_OK;
+  }
+
+  return res;
+
+  /* ERRORS */
+unknown_format:
+  {
+    GST_ELEMENT_ERROR (filter, CORE, NOT_IMPLEMENTED, (NULL),
+        ("unknown format"));
+    return GST_FLOW_NOT_NEGOTIATED;
+  }
+invalid_buffer:
+  {
+    GST_ELEMENT_WARNING (filter, CORE, NOT_IMPLEMENTED, (NULL),
+        ("invalid video buffer received"));
+    return GST_FLOW_OK;
+  }
 }
 
 /* transform */
