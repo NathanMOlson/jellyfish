@@ -1,10 +1,9 @@
 #include "jelly_filter.h"
 #include <opencv2/imgproc.hpp>
-#include <iostream>
 
 using namespace std;
 
-TurnQueue JellyFilter::turn_q_;
+PtsQueue JellyFilter::pts_q_;
 
 JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad)
 {
@@ -13,7 +12,7 @@ JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad)
 
 JellyFilter::~JellyFilter()
 {
-    turn_q_.disable();
+    pts_q_.disable();
 }
 
 void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstClockTime duration)
@@ -43,12 +42,6 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
 {
     GstBuffer *inbuf = inframe->buffer;
     GstBuffer *outbuf = outframe->buffer;
-    int turn = inbuf->offset;
-    if (inbuf->offset == -1)
-    {
-        turn = (inbuf->pts*3+2)/100000000;
-    }
-    cout<<"Got         "<<turn<<" "<<inbuf->pts<<endl;
     cv::Mat in(inframe->info.height, inframe->info.width, CV_8UC4, inframe->data[0]);
     cv::Mat out(outframe->info.height, outframe->info.width, CV_8UC4, outframe->data[0]);
     transform(in, out, inbuf->pts, inbuf->duration);
@@ -59,10 +52,7 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
     if (outbuf != inbuf)
         gst_buffer_unref(inbuf);
 
-    //cout << "Waiting for " << turn << endl;
-    turn_q_.WaitForTurn(turn);
-    cout << "Waited for  " << turn << endl;
+    pts_q_.WaitForTurn(outbuf->pts);
     gst_pad_push(srcpad_, outbuf);
-    //this_thread::sleep_for(0.001s);
-    turn_q_.MarkTurnComplete(turn);
+    pts_q_.MarkTurnComplete(outbuf->pts);
 }

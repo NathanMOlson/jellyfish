@@ -3,7 +3,7 @@
 
 #include <gst/video/video.h>
 #include <opencv2/core.hpp>
-#include "turn_queue.h"
+#include "pts_queue.h"
 
 class JellyFilter
 {
@@ -15,7 +15,7 @@ public:
 private:
     void transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstClockTime duration);
     GstPad* srcpad_;
-    static TurnQueue turn_q_;
+    static PtsQueue pts_q_;
     int n_ = 0;
 };
 
