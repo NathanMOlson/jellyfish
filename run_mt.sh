@@ -1,0 +1,1 @@
+gst-launch-1.0 videotestsrc ! video/x-raw,width=1920,height=1080,framerate=30/1 ! videoconvert  ! roundrobin name=t ! queue ! jellyfilter ! funnel name=f ! queue ! videoconvert ! ximagesink t. ! queue ! jellyfilter ! f. t. ! queue ! jellyfilter ! f. t. ! queue ! jellyfilter ! f. --gst-plugin-path=build

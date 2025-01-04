@@ -278,7 +278,7 @@ gst_jelly_filter_transform_async (GstVideoFilter * filter, GstVideoFrame * infra
   GstJellyFilter *jellyfilter = GST_JELLY_FILTER (filter);
 
   GST_DEBUG_OBJECT (jellyfilter, "transform_frame");
-  jellyfilter->jelly_filter->transform(inframe, outframe);
+  jellyfilter->jelly_filter->transform_async(inframe, outframe);
 
   return GST_FLOW_OK;
 }
