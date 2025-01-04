@@ -43,11 +43,15 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
 {
     GstBuffer *inbuf = inframe->buffer;
     GstBuffer *outbuf = outframe->buffer;
+    int turn = inbuf->offset;
+    if (inbuf->offset == -1)
+    {
+        turn = (inbuf->pts*3+2)/100000000;
+    }
+    cout<<"Got         "<<turn<<" "<<inbuf->pts<<endl;
     cv::Mat in(inframe->info.height, inframe->info.width, CV_8UC4, inframe->data[0]);
     cv::Mat out(outframe->info.height, outframe->info.width, CV_8UC4, outframe->data[0]);
     transform(in, out, inbuf->pts, inbuf->duration);
-
-    int turn = inbuf->offset;
 
     gst_video_frame_unmap(outframe);
     gst_video_frame_unmap(inframe);
@@ -55,10 +59,10 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
     if (outbuf != inbuf)
         gst_buffer_unref(inbuf);
 
-    if (turn >= 0)
-    {
-        turn_q_.WaitForTurn(turn);
-    }
+    //cout << "Waiting for " << turn << endl;
+    turn_q_.WaitForTurn(turn);
+    cout << "Waited for  " << turn << endl;
     gst_pad_push(srcpad_, outbuf);
+    //this_thread::sleep_for(0.001s);
     turn_q_.MarkTurnComplete(turn);
 }
