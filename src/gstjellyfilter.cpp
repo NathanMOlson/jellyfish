@@ -28,7 +28,7 @@ static GstFlowReturn gst_jelly_filter_transform (GstBaseTransform * trans, GstBu
     GstBuffer * outbuf);
 static gboolean gst_jelly_filter_set_info (GstVideoFilter * filter, GstCaps * incaps,
     GstVideoInfo * in_info, GstCaps * outcaps, GstVideoInfo * out_info);
-static GstFlowReturn gst_jelly_filter_transform_async (GstVideoFilter * filter,
+static GstFlowReturn gst_jelly_filter_transform_frame (GstVideoFilter * filter,
     GstVideoFrame * inframe, GstVideoFrame * outframe);
 
 enum
@@ -79,7 +79,7 @@ gst_jelly_filter_class_init (GstJellyFilterClass * klass)
   base_transform_class->stop = GST_DEBUG_FUNCPTR (gst_jelly_filter_stop);
   base_transform_class->transform = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform);
   video_filter_class->set_info = GST_DEBUG_FUNCPTR (gst_jelly_filter_set_info);
-  video_filter_class->transform_frame = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_async);
+  video_filter_class->transform_frame = GST_DEBUG_FUNCPTR (gst_jelly_filter_transform_frame);
 
 }
 
@@ -272,13 +272,13 @@ invalid_buffer:
 
 /* transform */
 static GstFlowReturn
-gst_jelly_filter_transform_async (GstVideoFilter * filter, GstVideoFrame * inframe,
+gst_jelly_filter_transform_frame (GstVideoFilter * filter, GstVideoFrame * inframe,
     GstVideoFrame * outframe)
 {
   GstJellyFilter *jellyfilter = GST_JELLY_FILTER (filter);
 
   GST_DEBUG_OBJECT (jellyfilter, "transform_frame");
-  jellyfilter->jelly_filter->transform_async(inframe, outframe);
+  jellyfilter->jelly_filter->transform(inframe, outframe);
 
   return GST_FLOW_OK;
 }

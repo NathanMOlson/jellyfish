@@ -6,39 +6,14 @@ using namespace std;
 
 TurnQueue JellyFilter::turn_q_;
 
-JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad), q_("JellyFilter", 4)
+JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad)
 {
-    static int n = 0;
-    n_ = n++;
     cv::setNumThreads(0);
-    for (int i = 0; i < 1; i++)
-    {
-        threads_.push_back(thread(&JellyFilter::work, this));
-    }
 }
 
 JellyFilter::~JellyFilter()
 {
-    q_.disable();
     turn_q_.disable();
-    for (auto &thread : threads_)
-    {
-        thread.join();
-    }
-}
-
-void JellyFilter::work()
-{
-    while (true)
-    {
-        InOutFrames frames;
-        MpmcResult result = q_.pop(frames);
-        if (result != MpmcResult::SUCCESS)
-        {
-            break;
-        }
-        transform(frames.in, frames.out);
-    }
 }
 
 void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstClockTime duration)
@@ -86,13 +61,4 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
     }
     gst_pad_push(srcpad_, outbuf);
     turn_q_.MarkTurnComplete(turn);
-}
-
-void JellyFilter::transform_async(GstVideoFrame *inframe, GstVideoFrame *outframe)
-{
-    InOutFrames frames;
-    frames.in = inframe;
-    frames.out = outframe;
-    // q_.push(frames, MpmcFullBehavior::DISCARD_OLDEST);
-    transform(frames.in, frames.out);
 }
