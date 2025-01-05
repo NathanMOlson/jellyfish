@@ -9,7 +9,7 @@ JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad), q_("JellyFilter", 1)
     static int n = 0;
     n_ = n++;
     cv::setNumThreads(0);
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         threads_.push_back(thread(&JellyFilter::work, this));
     }
@@ -72,11 +72,11 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
 
     int pts = inbuf->pts;
 
+    if (outbuf != inbuf)
+        gst_buffer_unref(inbuf);
+
     gst_video_frame_unmap(outframe);
     gst_video_frame_unmap(inframe);
-
-    // if (outbuf != inbuf)
-    //     gst_buffer_unref(inbuf);
 
     if (pts >= 0)
     {
