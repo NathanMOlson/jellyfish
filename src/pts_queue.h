@@ -8,7 +8,7 @@
 class PtsQueue
 {
 public:
-    PtsQueue() : _last_pts(0xF000000000000000), _capacity(16), _enabled(true)
+    PtsQueue() : _last_pts(0xF000000000000000), _capacity(3), _enabled(true)
     {
     }
 

@@ -43,9 +43,18 @@ void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstCloc
 {
     cv::Mat hpf;
     cv::Mat blur;
-    cv::GaussianBlur(in, blur, cv::Size(51, 51), 25);
+    
+    // auto t1 = chrono::steady_clock::now().time_since_epoch().count();
+    // cv::GaussianBlur(in, blur, cv::Size(51, 51), 25);
+    cv::boxFilter(in, blur, -1, cv::Size(43, 43));
+    for (int i = 0; i < 3; i++)
+    {
+        cv::boxFilter(blur, blur, -1, cv::Size(43, 43));
+    }
+    // auto t2 = chrono::steady_clock::now().time_since_epoch().count();
 
     cv::subtract(in, blur, hpf, cv::noArray(), CV_16S);
+    // auto t3 = chrono::steady_clock::now().time_since_epoch().count();
 
     cv::Mat filtered;
 
@@ -58,12 +67,17 @@ void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstCloc
     t.at<int16_t>(3, 3) = 1;
 
     cv::transform(hpf, filtered, t);
+    // auto t4 = chrono::steady_clock::now().time_since_epoch().count();
 
     filtered.convertTo(out, CV_8UC4);
+    // auto t5 = chrono::steady_clock::now().time_since_epoch().count();
+
+    // cout<<t2-t1<<" "<<t3-t2<<" "<<t4-t3<<" "<<t5-t4<<"\n"<<flush;
 }
 
 void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
 {
+    // cout<<"3 "<<chrono::steady_clock::now().time_since_epoch().count()<<" "<<inframe->buffer->pts<<"\n"<<flush;
     GstBuffer *inbuf = inframe->buffer;
     GstBuffer *outbuf = outframe->buffer;
     cv::Mat in(inframe->info.height, inframe->info.width, CV_8UC4, inframe->data[0]);
@@ -82,7 +96,9 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
     {
         pts_q_.WaitForTurn(pts);
     }
+    // cout<<"4 "<<chrono::steady_clock::now().time_since_epoch().count()<<" "<<inframe->buffer->pts<<"\n"<<flush;
     gst_pad_push(srcpad_, outbuf);
+    // cout<<"5 "<<chrono::steady_clock::now().time_since_epoch().count()<<" "<<inframe->buffer->pts<<"\n"<<flush;
 
     gst_buffer_unref(inbuf);
     gst_buffer_unref(outbuf);
@@ -93,10 +109,11 @@ void JellyFilter::transform_async(GstVideoFrame *inframe, GstVideoFrame *outfram
 {
     InOutFrames frames;
     frames.in = *inframe;
+    // cout<<"1 "<<chrono::steady_clock::now().time_since_epoch().count()<<" "<<inframe->buffer->pts<<"\n"<<flush;
     frames.out = *outframe;
     gst_buffer_ref(inframe->buffer);
     gst_buffer_ref(outframe->buffer);
-    stringstream ss;
     q_.push(frames, MpmcFullBehavior::BLOCK);
+    // cout<<"2 "<<chrono::steady_clock::now().time_since_epoch().count()<<" "<<inframe->buffer->pts<<"\n"<<flush;
     // transform(frames.in, frames.out);
 }
