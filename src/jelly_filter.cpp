@@ -84,8 +84,8 @@ void JellyFilter::transform(GstVideoFrame *inframe, GstVideoFrame *outframe)
     }
     gst_pad_push(srcpad_, outbuf);
 
-    gst_mini_object_unref(&inbuf->mini_object);
-    gst_mini_object_unref(&outbuf->mini_object);
+    gst_buffer_unref(inbuf);
+    gst_buffer_unref(outbuf);
     pts_q_.MarkTurnComplete(pts);
 }
 
@@ -94,8 +94,8 @@ void JellyFilter::transform_async(GstVideoFrame *inframe, GstVideoFrame *outfram
     InOutFrames frames;
     frames.in = *inframe;
     frames.out = *outframe;
-    gst_mini_object_ref(&inframe->buffer->mini_object);
-    gst_mini_object_ref(&outframe->buffer->mini_object);
+    gst_buffer_ref(inframe->buffer);
+    gst_buffer_ref(outframe->buffer);
     stringstream ss;
     q_.push(frames, MpmcFullBehavior::BLOCK);
     // transform(frames.in, frames.out);
