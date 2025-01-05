@@ -25,3 +25,10 @@ PkgConfig::gstreamer-video
 PkgConfig::gstreamer-app
 ${OpenCV_LIBS}
 )
+
+add_library(gstroundrobin SHARED src/gstroundrobin.c)
+target_compile_options(gstroundrobin PUBLIC -Wno-missing-field-initializers -Wno-unused-parameter -Wno-pedantic)
+
+target_link_libraries(gstroundrobin
+PkgConfig::gstreamer
+)
