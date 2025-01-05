@@ -4,12 +4,12 @@
 #include <gst/video/video.h>
 #include <opencv2/core.hpp>
 #include "mpmc_queue.h"
-#include "turn_queue.h"
+#include "pts_queue.h"
 
 struct InOutFrames
 {
-    GstVideoFrame *in;
-    GstVideoFrame *out;
+    GstVideoFrame in;
+    GstVideoFrame out;
 };
 
 class JellyFilter
@@ -26,7 +26,7 @@ private:
     std::vector<std::thread> threads_;
     GstPad* srcpad_;
     MpmcQueue<InOutFrames> q_;
-    static TurnQueue turn_q_;
+    PtsQueue pts_q_;
     int n_ = 0;
 };
 
