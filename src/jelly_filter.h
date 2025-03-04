@@ -28,6 +28,7 @@ private:
     MpmcQueue<InOutFrames> q_;
     PtsQueue pts_q_;
     int n_ = 0;
+    cv::Mat overlay_;
 };
 
 #endif

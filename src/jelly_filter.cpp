@@ -1,5 +1,6 @@
 #include "jelly_filter.h"
 #include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <iostream>
 
 using namespace std;
@@ -9,6 +10,17 @@ JellyFilter::JellyFilter(GstPad *srcpad) : srcpad_(srcpad), q_("JellyFilter", 1)
     static int n = 0;
     n_ = n++;
     cv::setNumThreads(0);
+    cv::Mat overlay;
+    overlay = cv::imread("overlay.png", cv::IMREAD_GRAYSCALE);
+    overlay.convertTo(overlay, CV_8U);
+    cv::resize(overlay, overlay, cv::Size(1280, 720));
+    overlay = 255 - overlay;
+    overlay = overlay / 255;
+    cv::rotate(overlay, overlay, cv::ROTATE_180);
+    cv::merge(vector<cv::Mat>{overlay.clone(), overlay.clone(), overlay.clone(), overlay.clone()}, overlay);
+    overlay_ = cv::Mat::zeros(1344, 784, CV_8UC3);
+    cout<<overlay.type()<<" "<<overlay_.type()<<endl;
+    cv::copyMakeBorder(overlay, overlay_, 32, 32, 32, 32, cv::BORDER_CONSTANT, 0); 
     for (int i = 0; i < 4; i++)
     {
         threads_.push_back(thread(&JellyFilter::work, this));
@@ -46,14 +58,16 @@ void JellyFilter::transform(cv::Mat &in, cv::Mat &out, GstClockTime pts, GstCloc
     
     // auto t1 = chrono::steady_clock::now().time_since_epoch().count();
     // cv::GaussianBlur(in, blur, cv::Size(51, 51), 25);
-    cv::boxFilter(in, blur, -1, cv::Size(43, 43));
+    cv::Mat in1;
+    cv::multiply(in, overlay_, in1);
+    cv::boxFilter(in1, blur, -1, cv::Size(43, 43));
     for (int i = 0; i < 3; i++)
     {
         cv::boxFilter(blur, blur, -1, cv::Size(43, 43));
     }
     // auto t2 = chrono::steady_clock::now().time_since_epoch().count();
 
-    cv::subtract(in, blur, hpf, cv::noArray(), CV_16S);
+    cv::subtract(in1, blur, hpf, cv::noArray(), CV_16S);
     // auto t3 = chrono::steady_clock::now().time_since_epoch().count();
 
     cv::Mat filtered;
